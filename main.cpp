@@ -4,7 +4,7 @@
 #include <time.h>
 #include<string.h>
 using namespace std;
-
+//
 #define COLUMNAS 6
 #define FILAS 6
 #define NO_MINAS -2
@@ -16,7 +16,7 @@ using namespace std;
 2 esta en juego
 */
 //Matriz para mostrar las minas y las contidad de minas alrededor
-int Celda[FILAS][COLUMNAS],condicionJugador=2;
+int Celda[FILAS][COLUMNAS],condicionJugador=2,aux=0;
 bool Estado[FILAS][COLUMNAS];//Estado de la celdas (logica)
 //Matriz para mostrar los caracteres de X y -1(Casilla cerrda o casilla abierta)
 char MostrarCelda[5][5][5];
@@ -36,16 +36,22 @@ void PonerMinas(int CantidadMinas){
 }}
 
 void MostrarTabla(){
-    cout << "\n    1  2  3  4  5  \n" << endl;//Referencia de la columna
+    cout<<"\n__________________________\n";
+    cout << "|   |  1 | 2 | 3 | 4 | 5 |\n";//Referencia de la columna
     for(int fila = 1; fila < FILAS; fila++){
-        cout << " " << fila << " ";//Referencia de las filas
+        cout << "| " << fila << " |";//Referencia de las filas
+        
         for(int columna = 1; columna < COLUMNAS; columna++){
             if( Estado[fila][columna]==true ){
-                if( Celda[fila][columna] == SI_MINAS){ cout<<strcpy(MostrarCelda[fila][columna],"-1 ");}
-                else{ cout << " " << Celda[fila][columna] << " "; }}
-            else{ cout<<strcpy(MostrarCelda[fila][columna]," X "); }}
-        cout <<"\n\n";
-}}
+                if( Celda[fila][columna] == SI_MINAS){ cout<<strcpy(MostrarCelda[fila][columna]," -1 ");}
+                else{ cout << "  " << Celda[fila][columna] << " "; }}
+            else{ cout<<strcpy(MostrarCelda[fila][columna],"  X "); }
+            }
+        
+        cout <<"|\n";
+}
+cout<<"--------------------------\n";
+}
 
 //retorna el numero de minas que estan alrededor de la celda
 int contarMinas(int x, int y){
@@ -59,7 +65,7 @@ int contarMinas(int x, int y){
     return Minas;
 }
 
-void NumeroMinasCercanas(){
+void CargarCeldaMinasCercanas(){
     int  numero;
     for(int x = 1; x < FILAS; x++){
         for(int y = 1; y < COLUMNAS; y++){
@@ -80,8 +86,8 @@ int contarCeldas(){
 }
 
 //Metodo para abrir una celda
-void NumeroCelda(int x, int y){
-    if( x >= 0 && x < FILAS && y >= 0 && y < COLUMNAS ){
+void Abrir_Celda(int x, int y){
+    if( x > 0 && x < FILAS && y > 0 && y < COLUMNAS ){
         Estado[x][y] = true;//Estado abierta
         if( Celda[x][y] == SI_MINAS){
             condicionJugador = 0;
@@ -90,12 +96,37 @@ void NumeroCelda(int x, int y){
             for(int fila = x-1; fila < x+2; fila++){
                 for(int columna = y-1; columna < y+2; columna++){
                     if( fila >0 && fila < FILAS && columna > 0 && columna < COLUMNAS ){
-                        if( Celda[fila][columna] == 0 && !Estado[fila][columna]){ NumeroCelda(fila,columna); /*Existe Mina*/ }
+                        if( Celda[fila][columna] == 0 && !Estado[fila][columna]){ Abrir_Celda(fila,columna); /*Existe Mina*/ }
                         else{ Estado[fila][columna] = true; }
 }}}}}}
 
+int Contar_jugadas(){
+int cantidad=0;
+ for (int x = 1; x < FILAS; x++){
+      for (int y = 1; y < COLUMNAS; y++){
+           if (Estado[x][y]==true){
+                cantidad++;  
+      }
+    }
+}
+return cantidad;
+}
+
+int Contar_Celdas_sin_Mina(){
+int cantidad=0;
+ for (int x = 1; x < FILAS; x++){
+      for (int y = 1; y < COLUMNAS; y++){
+           if (Celda[x][y]!=SI_MINAS){
+                cantidad++;  
+      }
+    }  
+}
+ aux++;
+ return cantidad;
+}
+
 int main() {
-    int NMinas = 12,Fila,Columna,NCasillas;
+    int NMinas = 12,Fila,Columna,NCasillas,TJugadas=0,TotalCasillas=0;
 
     condicionJugador = 2;//Estado jugando
     NCasillas = 0;
@@ -104,26 +135,35 @@ int main() {
 
     srand ( time(NULL) );
     PonerMinas( NMinas );//Agregamso las minas
-    NumeroMinasCercanas();//Contamos las minas al rededor
+    CargarCeldaMinasCercanas();//Contamos las minas al rededor
+    
+    //Evitar que la funcion Contar_Celdas_sin_Mina se ejecute mas de una vez
+    if (aux<1){
+       TotalCasillas = Contar_Celdas_sin_Mina();
+    }
 
     while( condicionJugador == 2){ //Condicion del juego
         MostrarTabla();//Mostramos el los estados de la celdas
+       
+        cout<<"Total Jugadas: "<<TJugadas<<endl;
         cout << "\nIngrese el numero de Fila: ";cin >> Fila;//Se pide la fila
         cout << "Ingrese el numero de la Columna: ";cin >> Columna;//Se pide la columna
+        
         /*
         Se llama al metodo que sirve para abrir la celda 
         de acuerdo a la fila y columna ingresada
         */
-        NumeroCelda(Fila,Columna);
         system("cls");
-        NCasillas = contarCeldas();//Se cuentan las celdad abiertas
+        Abrir_Celda(Fila,Columna);
+        contarCeldas();//Se cuentan las celdad abiertas
+        TJugadas = Contar_jugadas();
+        
         //Se compara so el el numero de celdas abiertas es igual a total de celdas sin incluir la cantidad de minas
-        if( NCasillas == ( FILAS*COLUMNAS - NMinas) ){
+        if( TJugadas == TotalCasillas ){
             condicionJugador = 1;//Estado gana
     }}
 
     if( condicionJugador == 0){
-        MostrarTabla();
         cout << "Perdiste, Encontraste una mina" << endl;
     }else if (condicionJugador==1){
         MostrarTabla();
